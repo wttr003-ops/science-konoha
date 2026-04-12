@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Section Scientifique de Konoha</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sci-bg:#03070f;
+  --sci-surface:#060d1a;
+  --sci-card:#0a1628;
+  --sci-border:rgba(56,189,248,0.12);
+  --sci-accent:#38bdf8;
+  --sci-accent2:#0ea5e9;
+  --sci-purple:#818cf8;
+  --sci-green:#10b981;
+  --sci-gold:#f59e0b;
+  --sci-text:#e2e8f0;
+  --sci-muted:rgba(148,163,184,0.65);
+  --sci-mono:'JetBrains Mono',monospace;
+}
+html,body{background:var(--sci-bg);color:var(--sci-text);font-family:'Inter',sans-serif;min-height:100vh;scroll-behavior:smooth}
+canvas#particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.page{display:none;position:relative;z-index:1}
+.page.active{display:block}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(3,7,15,0.88);backdrop-filter:blur(14px);border-bottom:1px solid var(--sci-border);height:64px;display:flex;align-items:center;padding:0 2rem}
+.nav-inner{max-width:1200px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{display:flex;align-items:center;gap:12px;cursor:pointer;text-decoration:none}
+.nav-logo-icon{width:36px;height:36px;border-radius:8px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);display:flex;align-items:center;justify-content:center;font-size:18px}
+.nav-logo-text{font-size:15px;font-weight:800;color:var(--sci-accent);letter-spacing:-0.3px}
+.nav-logo-sub{font-size:10px;color:rgba(148,163,184,0.4);font-family:var(--sci-mono);letter-spacing:2px}
+.nav-links{display:flex;align-items:center;gap:2rem}
+.nav-links a{font-size:13px;color:var(--sci-muted);cursor:pointer;text-decoration:none;transition:color 0.15s}
+.nav-links a:hover{color:var(--sci-accent)}
+.nav-actions{display:flex;gap:10px;align-items:center}
+.btn-ghost{background:transparent;border:1px solid rgba(148,163,184,0.2);color:var(--sci-muted);border-radius:7px;padding:7px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s}
+.btn-ghost:hover{border-color:var(--sci-accent);color:var(--sci-accent)}
+.btn-accent{background:linear-gradient(135deg,#0ea5e9,#0369a1);color:white;border:none;border-radius:7px;padding:7px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:4rem 2rem;position:relative;overflow:hidden}
+.hero-rings{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+.hero-ring{position:absolute;border-radius:50%;border:1px solid rgba(56,189,248,0.07);transform:translate(-50%,-50%);animation:spin linear infinite}
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.3;transform:scale(0.6)}}
+@keyframes grad-move{0%{background-position:0%}100%{background-position:200%}}
+.tag{display:inline-flex;align-items:center;gap:8px;background:rgba(56,189,248,0.07);border:1px solid rgba(56,189,248,0.14);border-radius:20px;padding:5px 16px;font-size:11px;color:var(--sci-accent);font-family:var(--sci-mono);letter-spacing:2px;text-transform:uppercase;margin-bottom:2rem}
+.tag-dot{width:6px;height:6px;border-radius:50%;background:var(--sci-accent);animation:pulse-dot 2s infinite}
+h1.hero-title{font-size:clamp(2.8rem,6vw,4.8rem);font-weight:900;line-height:1.05;letter-spacing:-2px;margin-bottom:1.5rem;color:white}
+.hero-grad{background:linear-gradient(90deg,#38bdf8,#818cf8,#38bdf8);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:grad-move 4s linear infinite}
+.hero-desc{font-size:1.1rem;color:var(--sci-muted);max-width:580px;line-height:1.75;margin-bottom:3rem}
+.hero-btns{display:flex;gap:14px;flex-wrap:wrap}
+.btn-primary-sci{background:linear-gradient(135deg,#0ea5e9,#0369a1);color:white;border:none;border-radius:10px;padding:14px 32px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:transform 0.15s,box-shadow 0.15s}
+.btn-primary-sci:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(14,165,233,0.3)}
+.btn-outline-sci{background:rgba(56,189,248,0.07);color:var(--sci-accent);border:1px solid rgba(56,189,248,0.25);border-radius:10px;padding:14px 32px;font-size:15px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s}
+.btn-outline-sci:hover{background:rgba(56,189,248,0.12);border-color:rgba(56,189,248,0.4)}
+
+/* SECTIONS */
+.section{padding:6rem 2rem;max-width:1100px;margin:0 auto}
+.section-full{padding:6rem 2rem;width:100%}
+.section-dark{background:rgba(6,13,26,0.95);border-top:1px solid var(--sci-border);border-bottom:1px solid var(--sci-border)}
+.section-label{font-family:var(--sci-mono);font-size:11px;color:var(--sci-accent);letter-spacing:3px;text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:10px}
+.section-label::before{content:'';width:24px;height:1px;background:var(--sci-accent)}
+h2.section-title{font-size:2.5rem;font-weight:900;color:white;line-height:1.1;margin-bottom:1.5rem;letter-spacing:-1px}
+
+/* STATS BAR */
+.stats-bar{background:rgba(10,22,40,0.9);border-top:1px solid var(--sci-border);border-bottom:1px solid var(--sci-border);padding:0}
+.stats-grid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.stat-item{padding:2rem 1rem;text-align:center;border-right:1px solid var(--sci-border)}
+.stat-item:last-child{border-right:none}
+.stat-val{font-size:3rem;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+.stat-label{font-size:11px;color:rgba(148,163,184,0.45);margin-top:6px;font-family:var(--sci-mono);letter-spacing:2px;text-transform:uppercase}
+
+/* CARDS */
+.cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.sci-card{background:var(--sci-card);border:1px solid var(--sci-border);border-radius:16px;padding:2rem;transition:border-color 0.2s,transform 0.2s;cursor:default}
+.sci-card:hover{border-color:rgba(56,189,248,0.3);transform:translateY(-3px)}
+.card-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:1.25rem}
+.card-title{font-size:15px;font-weight:700;color:white;margin-bottom:8px}
+.card-desc{font-size:13px;color:var(--sci-muted);line-height:1.65}
+
+/* GRADES */
+.grade-list{display:flex;flex-direction:column;gap:10px;max-width:700px;margin:0 auto}
+.grade-row{display:flex;align-items:center;gap:1.25rem;padding:1.25rem 1.5rem;border-radius:12px;border:1px solid}
+.grade-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.grade-info{flex:1}
+.grade-name{font-size:15px;font-weight:800}
+.grade-desc{font-size:12px;color:rgba(148,163,184,0.45);margin-top:3px}
+.grade-rank{font-family:var(--sci-mono);font-size:10px;letter-spacing:1px}
+
+/* JOURNAL */
+.journal-list{display:flex;flex-direction:column;gap:12px}
+.journal-item{background:var(--sci-card);border:1px solid var(--sci-border);border-radius:12px;padding:1.25rem 1.5rem;display:flex;gap:14px;align-items:flex-start}
+.journal-date{font-family:var(--sci-mono);font-size:11px;color:rgba(148,163,184,0.4);white-space:nowrap;padding-top:2px}
+.journal-title{font-size:14px;font-weight:600;color:white;margin-bottom:4px}
+.journal-text{font-size:13px;color:var(--sci-muted);line-height:1.6}
+.journal-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-family:var(--sci-mono);font-weight:600;display:inline-block;margin-top:6px}
+
+/* AUTH BOXES */
+.auth-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:6rem 2rem 3rem}
+.auth-box{background:var(--sci-card);border:1px solid var(--sci-border);border-radius:16px;padding:2.5rem;width:100%;max-width:440px}
+.auth-title{font-size:1.6rem;font-weight:800;color:white;margin-bottom:6px}
+.auth-sub{font-size:13px;color:var(--sci-muted);margin-bottom:2rem}
+.form-group{margin-bottom:1rem}
+.form-group label{display:block;font-size:12px;color:rgba(148,163,184,0.6);margin-bottom:6px;font-family:var(--sci-mono);text-transform:uppercase;letter-spacing:1px}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:rgba(3,7,15,0.8);border:1px solid rgba(56,189,248,0.15);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--sci-text);font-family:'Inter',sans-serif;outline:none;transition:border-color 0.15s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:rgba(56,189,248,0.4)}
+.form-group textarea{resize:vertical;min-height:100px}
+.form-group select option{background:#060d1a}
+.btn-full{width:100%;padding:12px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif}
+.err{font-size:12px;color:#ef4444;margin-bottom:10px;min-height:16px}
+.ok{font-size:12px;color:#10b981;margin-bottom:10px;min-height:16px;display:none}
+.auth-link{font-size:13px;color:var(--sci-muted);margin-top:1rem;text-align:center}
+.auth-link a{color:var(--sci-accent);cursor:pointer;text-decoration:none}
+
+/* DASHBOARD */
+.dashboard{display:flex;height:100vh;overflow:hidden}
+.dash-sidebar{width:230px;background:var(--sci-surface);border-right:1px solid var(--sci-border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.dash-sidebar-logo{padding:16px;border-bottom:1px solid var(--sci-border);display:flex;align-items:center;gap:10px}
+.dash-sidebar-nav{padding:10px 8px;flex:1}
+.dash-nav-btn{width:100%;display:flex;align-items:center;gap:9px;padding:9px 12px;border:none;background:transparent;color:var(--sci-muted);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border-radius:7px;margin-bottom:2px;text-align:left;transition:all 0.12s;border-left:2px solid transparent}
+.dash-nav-btn:hover{background:rgba(56,189,248,0.06);color:var(--sci-accent)}
+.dash-nav-btn.active{background:rgba(56,189,248,0.1);color:var(--sci-accent);border-left-color:var(--sci-accent)}
+.dash-user{padding:12px 16px;border-top:1px solid var(--sci-border);display:flex;align-items:center;gap:10px}
+.dash-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#818cf8);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:white;flex-shrink:0}
+.dash-main{flex:1;overflow-y:auto;background:var(--sci-bg);display:flex;flex-direction:column}
+.dash-topbar{padding:14px 24px;border-bottom:1px solid var(--sci-border);background:var(--sci-surface);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.dash-content{padding:24px;flex:1}
+.dash-tab{display:none}
+.dash-tab.active{display:block}
+.dash-title{font-size:18px;font-weight:800;color:var(--sci-accent);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:10px;font-family:var(--sci-mono)}
+.dash-title::before{content:'';width:4px;height:18px;background:var(--sci-accent);border-radius:2px}
+.dash-block{background:var(--sci-card);border:1px solid var(--sci-border);border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1rem}
+.kpi{background:var(--sci-surface);border-radius:8px;padding:12px;text-align:center}
+.kpi-val{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums}
+.kpi-label{font-size:10px;color:rgba(148,163,184,0.45);margin-top:3px;font-family:var(--sci-mono);letter-spacing:1px;text-transform:uppercase}
+.row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--sci-border);font-size:13px}
+.row:last-child{border-bottom:none}
+.badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;font-family:var(--sci-mono)}
+
+/* FOOTER */
+footer{padding:2rem;text-align:center;border-top:1px solid var(--sci-border);background:var(--sci-surface)}
+footer p{font-size:12px;color:rgba(148,163,184,0.25);font-family:var(--sci-mono);letter-spacing:1px}
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" onclick="showSciPage('home')">
+      <div class="nav-logo-icon">🔬</div>
+      <div>
+        <div class="nav-logo-text">Section Scientifique</div>
+        <div class="nav-logo-sub">木ノ葉科学センター</div>
+      </div>
+    </a>
+    <div class="nav-links" id="nav-public">
+      <a onclick="showSciPage('home')">Accueil</a>
+      <a onclick="scrollToSection('s-histoire')">Histoire</a>
+      <a onclick="scrollToSection('s-services')">Services</a>
+      <a onclick="scrollToSection('s-equipe')">Équipe</a>
+      <a onclick="scrollToSection('s-journal')">Journal</a>
+      <a onclick="scrollToSection('s-recrutement')">Recrutement</a>
+    </div>
+    <div class="nav-links" id="nav-private" style="display:none">
+      <!-- Filled by JS -->
+    </div>
+    <div class="nav-actions">
+      <span id="nav-user-info" style="display:none;font-size:13px;color:var(--sci-accent);font-weight:600"></span>
+      <button id="btn-login" class="btn-accent" onclick="showSciPage('login')">Connexion</button>
+      <button id="btn-logout" class="btn-ghost" style="display:none" onclick="sciLogout()">Déconnexion</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ==================== PAGE HOME ==================== -->
+<div id="sci-page-home" class="page active" style="padding-top:64px">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-rings">
+      <div class="hero-ring" style="width:400px;height:400px;animation-duration:10s"></div>
+      <div class="hero-ring" style="width:580px;height:580px;animation-duration:15s;animation-direction:reverse"></div>
+      <div class="hero-ring" style="width:750px;height:750px;animation-duration:22s"></div>
+    </div>
+    <div style="text-align:center;position:relative;z-index:1;max-width:820px">
+      <div class="tag"><span class="tag-dot"></span>Classification S — Konoha · Ninja Road FiveM</div>
+      <h1 class="hero-title">
+        Là où la science<br>
+        <span class="hero-grad">dépasse le possible</span>
+      </h1>
+      <p class="hero-desc">La Section Scientifique explore les frontières entre chakra et biologie, kekkai genkai et génétique. Nos laboratoires secrets œuvrent pour la protection de Konoha.</p>
+      <div class="hero-btns" style="justify-content:center">
+        <button class="btn-primary-sci" onclick="scrollToSection('s-services')">🧬 Découvrir nos analyses</button>
+        <button class="btn-outline-sci" onclick="scrollToSection('s-recrutement')">Rejoindre la section →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-bar">
+    <div class="stats-grid">
+      <div class="stat-item"><div class="stat-val" style="color:var(--sci-accent)">12+</div><div class="stat-label">Chercheurs</div></div>
+      <div class="stat-item"><div class="stat-val" style="color:var(--sci-purple)">300+</div><div class="stat-label">Dossiers</div></div>
+      <div class="stat-item"><div class="stat-val" style="color:var(--sci-green)">5</div><div class="stat-label">Spécialités</div></div>
+      <div class="stat-item"><div class="stat-val" style="color:var(--sci-gold)">S</div><div class="stat-label">Classification</div></div>
+    </div>
+  </div>
+
+  <!-- HISTOIRE -->
+  <div id="s-histoire" style="padding:6rem 2rem">
+    <div style="max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center">
+      <div>
+        <div class="section-label">Histoire</div>
+        <h2 class="section-title">Née dans le<br><span style="color:var(--sci-accent)">secret absolu</span></h2>
+        <p style="color:var(--sci-muted);line-height:1.8;margin-bottom:1.25rem;font-size:15px">Fondée dans l'ombre des premières guerres ninja, la Section Scientifique est le laboratoire le plus secret de Konoha. Ses origines remontent à une question simple : pourquoi certains ninjas possèdent-ils des capacités que la médecine ne peut expliquer ?</p>
+        <p style="color:var(--sci-muted);line-height:1.8;margin-bottom:1.5rem;font-size:15px">Pendant des générations, nos chercheurs ont travaillé en silence, décodant les secrets du chakra biologique, cartographiant les kekkai genkai. Chaque découverte — classifiée.</p>
+        <div style="background:rgba(56,189,248,0.05);border-left:3px solid var(--sci-accent);border-radius:0 8px 8px 0;padding:1rem 1.25rem;font-size:14px;color:var(--sci-muted);font-style:italic">"La différence entre la magie et la science, c'est la compréhension." — Fondateur inconnu</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="sci-card"><div class="card-icon" style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.15)">🧬</div><div class="card-title">Génétique Ninja</div><div class="card-desc">Kekkai genkai, mutations et hérédité chakrale</div></div>
+        <div class="sci-card"><div class="card-icon" style="background:rgba(129,140,248,0.08);border:1px solid rgba(129,140,248,0.15)">⚡</div><div class="card-title">Chakra Quantique</div><div class="card-desc">Flux, anomalies et résonances avancées</div></div>
+        <div class="sci-card"><div class="card-icon" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.15)">🦠</div><div class="card-title">Pathologie Rare</div><div class="card-desc">Maladies inconnues et toxines ninja</div></div>
+        <div class="sci-card"><div class="card-icon" style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.15)">🔭</div><div class="card-title">Projets Classifiés</div><div class="card-desc">Niveau S — accès restreint</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SERVICES -->
+  <div id="s-services" class="section-full section-dark">
+    <div style="max-width:1100px;margin:0 auto;padding:0">
+      <div style="text-align:center;margin-bottom:3.5rem">
+        <div class="section-label" style="justify-content:center">Services</div>
+        <h2 class="section-title" style="margin-bottom:0">Nos protocoles d'analyse</h2>
+      </div>
+      <div class="cards-grid">
+        <div class="sci-card"><div class="card-icon" style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.15)">🩸</div><div class="card-title">Analyse de sang chakral</div><div class="card-desc">Détection des anomalies chakrales sanguines, diagnostic des intoxications et mutations rares.</div><div style="margin-top:1rem;font-size:11px;color:var(--sci-accent);font-family:var(--sci-mono)">→ PROTOCOLE A-12</div></div>
+        <div class="sci-card"><div class="card-icon" style="background:rgba(129,140,248,0.08);border:1px solid rgba(129,140,248,0.15)">🧠</div><div class="card-title">Scan neuronal chakral</div><div class="card-desc">Cartographie des réseaux cérébraux chakraux, détection des blocages ou suractivations.</div><div style="margin-top:1rem;font-size:11px;color:var(--sci-purple);font-family:var(--sci-mono)">→ PROTOCOLE B-07</div></div>
+        <div class="sci-card"><div class="card-icon" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.15)">🧬</div><div class="card-title">Séquençage génétique</div><div class="card-desc">Analyse complète des marqueurs génétiques, identification des kekkai genkai dormants.</div><div style="margin-top:1rem;font-size:11px;color:var(--sci-green);font-family:var(--sci-mono)">→ PROTOCOLE C-03</div></div>
+        <div class="sci-card"><div class="card-icon" style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.15)">☢️</div><div class="card-title">Détection de toxines</div><div class="card-desc">Identification des poisons ninja inconnus, protocoles de décontamination chakrale.</div><div style="margin-top:1rem;font-size:11px;color:var(--sci-gold);font-family:var(--sci-mono)">→ PROTOCOLE D-15</div></div>
+        <div class="sci-card"><div class="card-icon" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.15)">💉</div><div class="card-title">Bilan post-combat</div><div class="card-desc">Évaluation après mission intense, séquelles chakrales invisibles à l'œil médical classique.</div><div style="margin-top:1rem;font-size:11px;color:#ef4444;font-family:var(--sci-mono)">→ PROTOCOLE E-09</div></div>
+        <div class="sci-card" style="border-color:rgba(56,189,248,0.25);cursor:pointer" onclick="showSciPage('postuler')" onmouseover="this.style.borderColor='rgba(56,189,248,0.5)'" onmouseout="this.style.borderColor='rgba(56,189,248,0.25)'"><div class="card-icon" style="background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.2)">📋</div><div class="card-title" style="color:var(--sci-accent)">Bilan complet</div><div class="card-desc">Tous nos protocoles en une session. Rapport classifié remis sous 48h.</div><div style="margin-top:1rem;font-size:12px;color:var(--sci-accent);font-weight:700">Nous rejoindre →</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ÉQUIPE -->
+  <div id="s-equipe" style="padding:6rem 2rem">
+    <div style="max-width:900px;margin:0 auto">
+      <div style="text-align:center;margin-bottom:3.5rem">
+        <div class="section-label" style="justify-content:center">Équipe</div>
+        <h2 class="section-title" style="margin-bottom:0">Grades de la Section</h2>
+      </div>
+      <div class="grade-list">
+        <div class="grade-row" style="background:rgba(245,158,11,0.05);border-color:rgba(245,158,11,0.2)">
+          <div class="grade-icon" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2)">👑</div>
+          <div class="grade-info"><div class="grade-name" style="color:var(--sci-gold)">Directeur Scientifique</div><div class="grade-desc">Direction stratégique — Accès total — Projets classifiés S</div></div>
+          <div class="grade-rank" style="color:rgba(245,158,11,0.4)">RANG 0</div>
+        </div>
+        <div class="grade-row" style="background:rgba(56,189,248,0.04);border-color:rgba(56,189,248,0.15)">
+          <div class="grade-icon" style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.2)">🔭</div>
+          <div class="grade-info"><div class="grade-name" style="color:var(--sci-accent)">Chercheur Senior</div><div class="grade-desc">Recherche avancée — Responsable de protocoles</div></div>
+          <div class="grade-rank" style="color:rgba(56,189,248,0.4)">RANG 1</div>
+        </div>
+        <div class="grade-row" style="background:rgba(129,140,248,0.04);border-color:rgba(129,140,248,0.12)">
+          <div class="grade-icon" style="background:rgba(129,140,248,0.08);border:1px solid rgba(129,140,248,0.2)">🧪</div>
+          <div class="grade-info"><div class="grade-name" style="color:var(--sci-purple)">Chercheur</div><div class="grade-desc">Protocoles et analyses — Gestion des dossiers</div></div>
+          <div class="grade-rank" style="color:rgba(129,140,248,0.4)">RANG 2</div>
+        </div>
+        <div class="grade-row" style="background:rgba(16,185,129,0.04);border-color:rgba(16,185,129,0.12)">
+          <div class="grade-icon" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2)">🧫</div>
+          <div class="grade-info"><div class="grade-name" style="color:var(--sci-green)">Assistant Scientifique</div><div class="grade-desc">Support laboratoire — Assistance aux chercheurs seniors</div></div>
+          <div class="grade-rank" style="color:rgba(16,185,129,0.4)">RANG 3</div>
+        </div>
+        <div class="grade-row" style="background:rgba(148,163,184,0.02);border-color:rgba(148,163,184,0.1)">
+          <div class="grade-icon" style="background:rgba(148,163,184,0.06);border:1px solid rgba(148,163,184,0.15)">📋</div>
+          <div class="grade-info"><div class="grade-name" style="color:rgba(148,163,184,0.65)">Stagiaire Scientifique</div><div class="grade-desc">Formation en cours — Encadré par un senior</div></div>
+          <div class="grade-rank" style="color:rgba(148,163,184,0.3)">RANG 4</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOURNAL -->
+  <div id="s-journal" class="section-full section-dark">
+    <div style="max-width:900px;margin:0 auto;padding:0">
+      <div class="section-label">Journal public</div>
+      <h2 class="section-title">Dernières communications</h2>
+      <div class="journal-list" id="public-journal-list">
+        <div style="color:var(--sci-muted);font-size:13px">Chargement...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECRUTEMENT -->
+  <div id="s-recrutement" style="padding:6rem 2rem">
+    <div style="max-width:1000px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:start">
+      <div>
+        <div class="section-label">Recrutement</div>
+        <h2 class="section-title">Rejoindre la Section</h2>
+        <p style="color:var(--sci-muted);line-height:1.8;margin-bottom:1.5rem;font-size:15px">Vous avez l'esprit curieux et la rigueur scientifique ? Nous recrutons des talents exceptionnels prêts à repousser les frontières.</p>
+        <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:2rem">
+          <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--sci-muted)"><span style="width:20px;height:20px;border-radius:50%;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--sci-accent);flex-shrink:0">✓</span>Rang Chunin ou supérieur requis</div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--sci-muted)"><span style="width:20px;height:20px;border-radius:50%;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--sci-accent);flex-shrink:0">✓</span>Casier judiciaire vierge obligatoire</div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--sci-muted)"><span style="width:20px;height:20px;border-radius:50%;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--sci-accent);flex-shrink:0">✓</span>Test d'aptitude chakrale préliminaire</div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--sci-muted)"><span style="width:20px;height:20px;border-radius:50%;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--sci-accent);flex-shrink:0">✓</span>Accord de confidentialité signé</div>
+        </div>
+        <button class="btn-primary-sci" onclick="showSciPage('postuler')" style="width:100%">Déposer ma candidature</button>
+      </div>
+      <div class="dash-block" style="padding:1.75rem">
+        <div style="font-size:13px;font-weight:700;color:white;margin-bottom:1.25rem">Processus de recrutement</div>
+        <div style="display:flex;flex-direction:column;gap:0">
+          <div style="display:flex;gap:12px;padding-bottom:1rem;border-bottom:1px solid var(--sci-border)"><div style="width:26px;height:26px;border-radius:50%;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--sci-accent);flex-shrink:0">1</div><div><div style="font-size:13px;font-weight:600;color:white">Candidature en ligne</div><div style="font-size:11px;color:var(--sci-muted);margin-top:2px">Via le formulaire — réponse sous 72h</div></div></div>
+          <div style="display:flex;gap:12px;padding:1rem 0;border-bottom:1px solid var(--sci-border)"><div style="width:26px;height:26px;border-radius:50%;background:rgba(129,140,248,0.1);border:1px solid rgba(129,140,248,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--sci-purple);flex-shrink:0">2</div><div><div style="font-size:13px;font-weight:600;color:white">Entretien préliminaire</div><div style="font-size:11px;color:var(--sci-muted);margin-top:2px">Avec un Chercheur Senior ou le Directeur</div></div></div>
+          <div style="display:flex;gap:12px;padding:1rem 0;border-bottom:1px solid var(--sci-border)"><div style="width:26px;height:26px;border-radius:50%;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--sci-green);flex-shrink:0">3</div><div><div style="font-size:13px;font-weight:600;color:white">Test d'aptitude</div><div style="font-size:11px;color:var(--sci-muted);margin-top:2px">Analyse chakrale complète</div></div></div>
+          <div style="display:flex;gap:12px;padding-top:1rem"><div style="width:26px;height:26px;border-radius:50%;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--sci-gold);flex-shrink:0">4</div><div><div style="font-size:13px;font-weight:600;color:white">Intégration</div><div style="font-size:11px;color:var(--sci-muted);margin-top:2px">Signature & accès au laboratoire</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>SECTION SCIENTIFIQUE DE KONOHA — 木ノ葉科学センター — NINJA ROAD FIVEM</p>
+    <p style="margin-top:6px">Classification : Confidentiel — Toute reproduction est interdite</p>
+  </footer>
+</div>
+
+<!-- ==================== PAGE LOGIN ==================== -->
+<div id="sci-page-login" class="page" style="padding-top:64px">
+  <div class="auth-page">
+    <div class="auth-box">
+      <div style="font-size:28px;margin-bottom:12px">🔬</div>
+      <div class="auth-title">Espace Scientifique</div>
+      <div class="auth-sub">Accès réservé au personnel de la Section Scientifique de Konoha</div>
+      <div class="err" id="login-err"></div>
+      <div class="form-group"><label>Nom et Prénom</label><input type="text" id="login-user" placeholder="Ex: Kenji Sora"/></div>
+      <div class="form-group"><label>Mot de passe</label><input type="password" id="login-pass" placeholder="••••••••"/></div>
+      <button class="btn-primary-sci btn-full" onclick="doSciLogin()">Se connecter</button>
+      <div class="auth-link"><a onclick="showSciPage('home')">← Retour à l'accueil</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PAGE POSTULER ==================== -->
+<div id="sci-page-postuler" class="page" style="padding-top:64px">
+  <div class="auth-page" style="align-items:flex-start;padding-top:5rem">
+
+    <!-- BLOCAGE CASIER PALIER 3 -->
+    <div id="post-blocked" style="display:none;max-width:580px;width:100%;text-align:center">
+      <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.25);border-radius:20px;padding:3rem 2.5rem">
+        <div style="font-size:56px;margin-bottom:1rem">🚫</div>
+        <div style="font-size:22px;font-weight:900;color:#ef4444;margin-bottom:1rem">Candidature refusée</div>
+        <div style="font-size:15px;color:rgba(239,68,68,0.8);margin-bottom:1.5rem;line-height:1.7">
+          Vous ne pouvez pas rejoindre la Section Scientifique de Konoha.
+        </div>
+        <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.15);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;text-align:left">
+          <div style="font-size:12px;font-weight:700;color:#ef4444;font-family:var(--sci-mono);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">⚖ Motif du refus</div>
+          <div id="blocked-reason" style="font-size:14px;color:rgba(239,68,68,0.85);line-height:1.65"></div>
+        </div>
+        <div style="font-size:13px;color:rgba(148,163,184,0.5);margin-bottom:1.5rem;line-height:1.6">
+          Un casier judiciaire de Palier 3 constitue une disqualification automatique et définitive pour toute candidature à la Section Scientifique. Cette décision est irrévocable.
+        </div>
+        <button onclick="showSciPage('home')" class="btn-outline-sci">← Retour à l'accueil</button>
+      </div>
+    </div>
+
+    <!-- FORMULAIRE SIMPLIFIÉ -->
+    <div class="auth-box" style="max-width:480px" id="post-form-box">
+      <div style="font-size:28px;margin-bottom:12px">📋</div>
+      <div class="auth-title">Candidature Scientifique</div>
+      <div class="auth-sub">Indiquez votre nom et prénom. Votre candidature sera examinée par le Directeur Scientifique.</div>
+      <div id="post-checking" style="display:none;padding:12px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.15);border-radius:8px;font-size:13px;color:var(--sci-accent);margin-bottom:12px;font-family:var(--sci-mono)">
+        ⏳ Vérification du casier judiciaire en cours...
+      </div>
+      <div class="err" id="post-err"></div>
+      <div class="ok" id="post-ok" style="display:none;padding:12px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:8px;font-size:13px;color:var(--sci-green);margin-bottom:12px">
+        ✓ Candidature envoyée ! Elle sera étudiée par le Directeur Scientifique.
+      </div>
+      <div class="form-group">
+        <label>Nom et Prénom *</label>
+        <input type="text" id="post-nom" placeholder="Ex: Kenji Sora"/>
+        <div style="font-size:11px;color:rgba(148,163,184,0.4);margin-top:4px;font-family:var(--sci-mono)">Votre casier judiciaire sera vérifié automatiquement</div>
+      </div>
+      <button class="btn-primary-sci btn-full" onclick="doPostuler()" style="margin-top:8px">Envoyer ma candidature</button>
+      <div class="auth-link"><a onclick="showSciPage('home')">← Retour à l'accueil</a></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== PAGE DASHBOARD ==================== -->
+<div id="sci-page-dashboard" class="page">
+  <div class="dashboard">
+    <div class="dash-sidebar">
+      <div class="dash-sidebar-logo">
+        <div class="nav-logo-icon">🔬</div>
+        <div>
+          <div style="font-size:12px;font-weight:800;color:var(--sci-accent)">Section Scientifique</div>
+          <div style="font-size:10px;color:rgba(148,163,184,0.35);font-family:var(--sci-mono)">木ノ葉科学</div>
+        </div>
+      </div>
+      <div class="dash-sidebar-nav" id="dash-nav">
+        <button class="dash-nav-btn active" onclick="switchTab('overview',this)">📊 Vue d'ensemble</button>
+        <button class="dash-nav-btn" onclick="switchTab('journal',this)">📰 Journal</button>
+        <button class="dash-nav-btn" onclick="switchTab('membres',this)">👥 Membres</button>
+        <button class="dash-nav-btn" onclick="switchTab('annuaire',this)">📒 Annuaire</button>
+        <button class="dash-nav-btn" onclick="switchTab('candidatures',this)">🔬 Candidatures</button>
+        <button class="dash-nav-btn" onclick="switchTab('dossiers',this)">📁 Dossiers scientifiques</button>
+        <button class="dash-nav-btn" onclick="switchTab('cours',this)">📚 Cours scientifiques</button>
+        <button class="dash-nav-btn" id="btn-ajout" onclick="switchTab('ajout',this)" style="display:none">➕ Ajouter membre</button>
+        <button class="dash-nav-btn" id="btn-logs" onclick="switchTab('logs',this)" style="display:none">🔒 Logs comptes</button>
+      </div>
+      <div class="dash-user">
+        <div class="dash-avatar" id="dash-av">??</div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--sci-text)" id="dash-name">—</div>
+          <div style="font-size:10px;color:var(--sci-muted)" id="dash-grade">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="dash-main">
+      <div class="dash-topbar">
+        <div style="font-size:12px;color:var(--sci-muted);font-family:var(--sci-mono)">SECTION SCIENTIFIQUE — <span style="color:var(--sci-accent)" id="dash-section-lbl">ESPACE PRIVÉ</span></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="width:7px;height:7px;border-radius:50%;background:var(--sci-green);animation:pulse-dot 2s infinite"></span>
+          <span style="font-size:12px;color:var(--sci-green);font-weight:600">Connecté</span>
+          <button class="btn-ghost" style="margin-left:8px;font-size:11px;padding:5px 10px" onclick="sciLogout()">Déconnexion</button>
+        </div>
+      </div>
+      <div class="dash-content">
+        <div class="dash-tab active" id="tab-overview"><div class="dash-title">Vue d'ensemble</div><div id="overview-content"></div></div>
+        <div class="dash-tab" id="tab-journal"><div class="dash-title">Journal interne</div><div id="journal-content"></div></div>
+        <div class="dash-tab" id="tab-membres"><div class="dash-title">Membres</div><div id="membres-content"></div></div>
+        <div class="dash-tab" id="tab-annuaire"><div class="dash-title">Annuaire</div><div id="annuaire-content"></div></div>
+        <div class="dash-tab" id="tab-candidatures"><div class="dash-title">Candidatures</div><div id="candidatures-content"></div></div>
+        <div class="dash-tab" id="tab-dossiers"><div class="dash-title">Dossiers Scientifiques</div><div id="dossiers-content"></div></div>
+        <div class="dash-tab" id="tab-cours"><div class="dash-title">Cours Scientifiques</div><div id="cours-content"></div></div>
+        <div class="dash-tab" id="tab-ajout"><div class="dash-title">Ajouter un membre</div><div id="ajout-content"></div></div>
+        <div class="dash-tab" id="tab-logs"><div class="dash-title">Logs Comptes</div><div id="logs-content"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG SUPABASE — même projet que l'hôpital
+// ============================================================
+const SB_URL = 'https://rqmrhcvlhufseiwefwtm.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxbXJoY3ZsaHVmc2Vpd2Vmd3RtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MzMyNjYsImV4cCI6MjA5MTMwOTI2Nn0.pDh3-XQ6qjupTkL2Nf09cAAM0YXEFFUdWdYVQkdd1cg';
+
+const SCIENCE_GRADES = ['Directeur Scientifique','Chercheur Senior','Chercheur','Assistant Scientifique','Stagiaire Scientifique'];
+const GRADE_RANK = {'Directeur Scientifique':0,'Chercheur Senior':1,'Chercheur':2,'Assistant Scientifique':3,'Stagiaire Scientifique':4};
+
+const state = { currentUser: null, users: {}, candidatures: [], journal: [], dossiers: [], cours: [] };
+
+// ============================================================
+// SUPABASE HELPERS
+// ============================================================
+async function sbGet(table, query='') {
+  const r = await fetch(SB_URL+'/rest/v1/'+table+query, {
+    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer '+SB_KEY }
+  });
+  if (!r.ok) throw new Error('SB '+r.status);
+  return r.json();
+}
+async function sbPost(table, data) {
+  const r = await fetch(SB_URL+'/rest/v1/'+table, {
+    method:'POST', headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    body: JSON.stringify(data)
+  });
+  return r.json();
+}
+async function sbPatch(table, query, data) {
+  return fetch(SB_URL+'/rest/v1/'+table+query, {
+    method:'PATCH', headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body: JSON.stringify(data)
+  });
+}
+async function sbDelete(table, query) {
+  return fetch(SB_URL+'/rest/v1/'+table+query, {
+    method:'DELETE', headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+  });
+}
+
+// ============================================================
+// SYNC
+// ============================================================
+async function syncUsers() {
+  try {
+    const users = await sbGet('users','?is_staff=eq.true&order=created_at.asc');
+    state.users = {};
+    if (Array.isArray(users)) {
+      users.forEach(u => {
+        if (SCIENCE_GRADES.includes(u.grade)) {
+          state.users[u.username] = {
+            fullname: u.fullname||u.username, grade: u.grade,
+            password: u.password, isStaff: true,
+            matricule: u.matricule||''
+          };
+        }
+      });
+    }
+  } catch(e) { console.warn('syncUsers:', e); }
+}
+
+async function syncAll() {
+  await syncUsers();
+  try {
+    // Candidatures pour section science
+    const cands = await sbGet('candidatures_hop','?order=id.desc');
+    if (Array.isArray(cands)) state.candidatures = cands.filter(c => c.section_dest === 'science' || c.type_section === 'science');
+  } catch(e) {}
+  try {
+    const journ = await sbGet('journal_hop','?order=id.desc&limit=30');
+    if (Array.isArray(journ)) state.journal = journ.filter(j => j.section === 'science' || !j.section);
+  } catch(e) {}
+  try {
+    const doss = await sbGet('dossiers_hop','?order=id.desc');
+    if (Array.isArray(doss)) state.dossiers = doss.filter(d => d.section === 'science');
+  } catch(e) {}
+  try {
+    const cours = await sbGet('cours_hop','?order=id.desc');
+    if (Array.isArray(cours)) state.cours = cours.filter(c => c.section === 'science');
+  } catch(e) {}
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showSciPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pg = document.getElementById('sci-page-'+id);
+  if (pg) pg.classList.add('active');
+  window.scrollTo(0,0);
+
+  // Nav visibility
+  const pub = document.getElementById('nav-public');
+  const priv = document.getElementById('nav-private');
+  if (id === 'dashboard') {
+    if(pub) pub.style.display='none';
+    if(priv) priv.style.display='flex';
+  } else {
+    if(pub) pub.style.display='flex';
+    if(priv) priv.style.display='none';
+  }
+
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'home') loadPublicJournal();
+}
+
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.dash-nav-btn').forEach(b => b.classList.remove('active'));
+  const tab = document.getElementById('tab-'+name);
+  if (tab) tab.classList.add('active');
+  if (btn) btn.classList.add('active');
+  renderTab(name);
+}
+
+// ============================================================
+// PARTICULES
+// ============================================================
+(function() {
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  let animId;
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  particles = Array.from({length:70}, () => ({
+    x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight,
+    vx: (Math.random()-0.5)*0.35, vy: (Math.random()-0.5)*0.35,
+    r: Math.random()*1.4+0.4,
+    alpha: Math.random()*0.45+0.08,
+    c: ['56,189,248','129,140,248','16,185,129'][Math.floor(Math.random()*3)]
+  }));
+
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for (let i=0;i<particles.length;i++) {
+      for (let j=i+1;j<particles.length;j++) {
+        const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        if(d<110){ctx.beginPath();ctx.strokeStyle='rgba(56,189,248,'+(0.055*(1-d/110))+')';ctx.lineWidth=0.4;ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.stroke();}
+      }
+    }
+    particles.forEach(p => {
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba('+p.c+','+p.alpha+')';ctx.fill();
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0||p.x>canvas.width)p.vx*=-1;
+      if(p.y<0||p.y>canvas.height)p.vy*=-1;
+    });
+    animId = requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ============================================================
+// AUTH
+// ============================================================
+async function doSciLogin() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value.trim();
+  const err = document.getElementById('login-err');
+  err.textContent = '';
+  if (!user||!pass) { err.textContent = 'Remplissez tous les champs.'; return; }
+
+  await syncUsers();
+
+  let found=null, foundKey=null;
+  for (const [key,u] of Object.entries(state.users)) {
+    const fn = u.fullname||key.replace(/_/g,' ');
+    if ((fn.toLowerCase()===user.toLowerCase() || key.toLowerCase()===user.toLowerCase().replace(/\s+/g,'_')) && u.password===pass) {
+      found=u; foundKey=key; break;
+    }
+  }
+
+  if (!found) { err.textContent = 'Nom ou mot de passe incorrect.'; return; }
+
+  state.currentUser = { username: foundKey, grade: found.grade, fullname: found.fullname };
+  localStorage.setItem('sci_session', JSON.stringify(state.currentUser));
+
+  // Update nav
+  document.getElementById('btn-login').style.display='none';
+  document.getElementById('btn-logout').style.display='block';
+  document.getElementById('nav-user-info').style.display='block';
+  document.getElementById('nav-user-info').textContent = found.fullname;
+
+  await syncAll();
+  showSciPage('dashboard');
+}
+
+function sciLogout() {
+  state.currentUser = null;
+  localStorage.removeItem('sci_session');
+  document.getElementById('btn-login').style.display='block';
+  document.getElementById('btn-logout').style.display='none';
+  document.getElementById('nav-user-info').style.display='none';
+  showSciPage('home');
+}
+
+// Restore session
+window.addEventListener('DOMContentLoaded', async () => {
+  const saved = localStorage.getItem('sci_session');
+  if (saved) {
+    try {
+      state.currentUser = JSON.parse(saved);
+      document.getElementById('btn-login').style.display='none';
+      document.getElementById('btn-logout').style.display='block';
+      document.getElementById('nav-user-info').style.display='block';
+      document.getElementById('nav-user-info').textContent = state.currentUser.fullname;
+      await syncAll();
+    } catch(e) {}
+  }
+  loadPublicJournal();
+});
+
+// ============================================================
+// POSTULER
+// ============================================================
+// Police Supabase config — pour vérifier les casiers
+const POLICE_SB_URL = 'https://tbzmqoxnsniknpqgcqrh.supabase.co';
+const POLICE_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRiem1xb3huc25pa25wcWdjcXJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2ODUwMTQsImV4cCI6MjA5MTI2MTAxNH0.3wi7vBAruxmVjSUzNoetmpFeGt_SiVRgxm0rXus8vQQ';
+
+async function checkCasierPolice(nom) {
+  // Search in police casiers table
+  try {
+    const nomLower = nom.toLowerCase().trim();
+    const res = await fetch(POLICE_SB_URL + '/rest/v1/casiers?order=id.asc', {
+      headers: { 'apikey': POLICE_SB_KEY, 'Authorization': 'Bearer ' + POLICE_SB_KEY }
+    });
+    if (!res.ok) return null;
+    const casiers = await res.json();
+    if (!Array.isArray(casiers)) return null;
+    // Find matching casier by name
+    const match = casiers.filter(c => {
+      const cn = (c.nom || '').toLowerCase().trim();
+      return cn === nomLower || cn.split(' ').reverse().join(' ') === nomLower;
+    });
+    return match.length > 0 ? match : null;
+  } catch(e) { console.warn('Police casier check:', e); return null; }
+}
+
+async function doPostuler() {
+  const nom = document.getElementById('post-nom').value.trim();
+  const err = document.getElementById('post-err');
+  const ok = document.getElementById('post-ok');
+  const checking = document.getElementById('post-checking');
+  const blocked = document.getElementById('post-blocked');
+  const formBox = document.getElementById('post-form-box');
+
+  err.textContent = '';
+  ok.style.display = 'none';
+
+  if (!nom) { err.textContent = 'Votre nom et prénom sont obligatoires.'; return; }
+  if (nom.trim().split(/\s+/).length < 2) { err.textContent = 'Veuillez indiquer votre nom ET prénom complets.'; return; }
+
+  // Show checking indicator
+  checking.style.display = 'block';
+
+  // Check police casier
+  const casiers = await checkCasierPolice(nom);
+  checking.style.display = 'none';
+
+  if (casiers && casiers.length > 0) {
+    // Check if any is palier 3
+    const palier3 = casiers.filter(c => c.palier === 'palier3' || c.type === 'Crime grave' || c.danger === 'elevé');
+    if (palier3.length > 0) {
+      // Block the candidature
+      const reasons = palier3.map(c => `• <strong>${c.type || 'Crime grave'}</strong> — ${c.motif || c.sanction || 'Infraction grave'} (${c.date || '—'})`).join('<br>');
+      document.getElementById('blocked-reason').innerHTML =
+        'Casier judiciaire de <strong style="color:#ef4444">Palier 3</strong> enregistré auprès de la Police de Konoha :<br><br>' + reasons;
+      formBox.style.display = 'none';
+      blocked.style.display = 'block';
+      return;
+    }
+  }
+
+  // No palier 3 — send candidature
+  try {
+    const hasCasier = casiers && casiers.length > 0 ? 'oui' : 'non';
+    await sbPost('candidatures_hop', {
+      nom, pseudo: nom,
+      niveau: 'Non précisé',
+      spécialité: 'Section Scientifique',
+      casier: hasCasier,
+      motiv: 'Candidature simplifiée — Section Scientifique',
+      status: 'wait',
+      section_dest: 'science',
+      date: new Date().toLocaleDateString('fr-FR'),
+      author: nom.replace(/\s+/g, '_')
+    });
+    ok.style.display = 'block';
+    document.getElementById('post-nom').value = '';
+  } catch(e) {
+    err.textContent = 'Erreur lors de l\'envoi. Réessayez.';
+  }
+}
+
+// ============================================================
+// DASHBOARD RENDER
+// ============================================================
+function renderDashboard() {
+  const u = state.currentUser;
+  if (!u) return;
+  const rank = GRADE_RANK[u.grade] ?? 9;
+
+  // Sidebar user
+  document.getElementById('dash-av').textContent = (u.fullname||u.username).slice(0,2).toUpperCase();
+  document.getElementById('dash-name').textContent = u.fullname||u.username;
+  document.getElementById('dash-grade').textContent = u.grade;
+
+  // Show admin buttons
+  if (rank <= 1) {
+    document.getElementById('btn-ajout').style.display='block';
+    document.getElementById('btn-logs').style.display='block';
+  }
+
+  renderTab('overview');
+}
+
+async function renderTab(name) {
+  const u = state.currentUser;
+  if (!u) return;
+  const rank = GRADE_RANK[u.grade] ?? 9;
+
+  if (name === 'overview') {
+    const sc = Object.keys(state.users).length;
+    const nc = state.candidatures.filter(c=>c.status==='wait').length;
+    document.getElementById('overview-content').innerHTML = `
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-val" style="color:var(--sci-accent)">${sc}</div><div class="kpi-label">Membres actifs</div></div>
+        <div class="kpi"><div class="kpi-val" style="color:var(--sci-gold)">${nc}</div><div class="kpi-label">Candidatures</div></div>
+        <div class="kpi"><div class="kpi-val" style="color:var(--sci-green)">${state.dossiers.length}</div><div class="kpi-label">Dossiers</div></div>
+      </div>
+      <div class="dash-block">
+        <div style="font-size:11px;font-weight:700;color:var(--sci-accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-family:var(--sci-mono)">Bienvenue, ${u.fullname}</div>
+        <p style="font-size:13px;color:var(--sci-muted);line-height:1.65">Vous êtes connecté à l'espace privé de la Section Scientifique de Konoha. Utilisez le menu à gauche pour naviguer entre les sections.</p>
+      </div>`;
+  }
+
+  if (name === 'membres') {
+    const members = Object.entries(state.users).sort((a,b)=>(GRADE_RANK[a[1].grade]??9)-(GRADE_RANK[b[1].grade]??9));
+    const gradeCols = {'Directeur Scientifique':'var(--sci-gold)','Chercheur Senior':'var(--sci-accent)','Chercheur':'var(--sci-purple)','Assistant Scientifique':'var(--sci-green)','Stagiaire Scientifique':'rgba(148,163,184,0.6)'};
+    document.getElementById('membres-content').innerHTML = `<div class="dash-block">${
+      members.map(([k,u]) => `<div class="row">
+        <div class="dash-avatar" style="width:32px;height:32px;font-size:11px">${(u.fullname||k).slice(0,2).toUpperCase()}</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--sci-text)">${u.fullname||k}</div></div>
+        <span class="badge" style="background:rgba(56,189,248,0.08);color:${gradeCols[u.grade]||'var(--sci-muted)'}">${u.grade}</span>
+      </div>`).join('') || '<p style="color:var(--sci-muted);font-size:13px">Aucun membre.</p>'
+    }</div>`;
+  }
+
+  if (name === 'annuaire') {
+    const members = Object.entries(state.users).sort((a,b)=>(GRADE_RANK[a[1].grade]??9)-(GRADE_RANK[b[1].grade]??9));
+    const canEdit = rank <= 1;
+    document.getElementById('annuaire-content').innerHTML = `<div class="dash-block">${
+      members.map(([k,u]) => `<div class="row">
+        <div class="dash-avatar" style="width:32px;height:32px;font-size:11px">${(u.fullname||k).slice(0,2).toUpperCase()}</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--sci-text)">${u.fullname||k}</div><div style="font-size:11px;color:var(--sci-muted)">${u.grade}</div></div>
+        ${canEdit ? `<button onclick="changeGradeSci('${k}',-1)" style="background:rgba(16,185,129,0.1);color:var(--sci-green);border:1px solid rgba(16,185,129,0.2);border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer">▲</button>
+        <button onclick="changeGradeSci('${k}',1)" style="background:rgba(245,158,11,0.1);color:var(--sci-gold);border:1px solid rgba(245,158,11,0.2);border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer">▼</button>
+        <button onclick="deleteMemberSci('${k}')" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer">🗑</button>` : ''}
+      </div>`).join('') || '<p style="color:var(--sci-muted);font-size:13px">Aucun membre.</p>'
+    }</div>`;
+  }
+
+  if (name === 'candidatures') {
+    if (rank > 1) { document.getElementById('candidatures-content').innerHTML = '<p style="color:var(--sci-muted)">Accès réservé aux Chercheurs Seniors et supérieur.</p>'; return; }
+    const cands = state.candidatures;
+    document.getElementById('candidatures-content').innerHTML = cands.length === 0
+      ? '<p style="color:var(--sci-muted);font-size:13px">Aucune candidature.</p>'
+      : '<div class="dash-block">' + cands.map(c => `<div class="row" style="flex-direction:column;align-items:flex-start;gap:6px">
+        <div style="display:flex;align-items:center;gap:10px;width:100%">
+          <div style="flex:1;font-size:13px;font-weight:600;color:var(--sci-text)">${c.pseudo||c.nom} <span style="font-size:11px;color:var(--sci-muted)">— ${c.niveau} — ${c.spécialité||''}</span></div>
+          <span class="badge" style="background:rgba(245,158,11,0.1);color:var(--sci-gold)">${c.status==='wait'?'En attente':c.status==='ok'?'Accepté':'Refusé'}</span>
+        </div>
+        <div style="font-size:12px;color:var(--sci-muted);line-height:1.5">${c.motiv||'—'}</div>
+        ${c.status==='wait' ? `<div style="display:flex;gap:8px">
+          <button onclick="actCandSci(${c.id},'ok')" style="background:rgba(16,185,129,0.1);color:var(--sci-green);border:1px solid rgba(16,185,129,0.3);border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer">✓ Accepter</button>
+          <button onclick="actCandSci(${c.id},'no')" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer">✗ Refuser</button>
+        </div>` : ''}
+      </div>`).join('') + '</div>';
+  }
+
+  if (name === 'journal') {
+    document.getElementById('journal-content').innerHTML = `
+      ${rank <= 1 ? `<div class="dash-block">
+        <div style="font-size:11px;font-weight:700;color:var(--sci-accent);margin-bottom:10px;font-family:var(--sci-mono)">PUBLIER UNE ENTRÉE</div>
+        <textarea id="new-journal-text" placeholder="Contenu de l'entrée..." style="width:100%;background:rgba(3,7,15,0.8);border:1px solid var(--sci-border);border-radius:8px;padding:10px;color:var(--sci-text);font-family:'Inter',sans-serif;font-size:13px;min-height:80px;margin-bottom:8px;resize:vertical"></textarea>
+        <button onclick="postJournal()" class="btn-primary-sci" style="padding:8px 20px;font-size:13px">Publier</button>
+      </div>` : ''}
+      <div class="dash-block" id="journal-entries">${renderJournalEntries()}</div>`;
+  }
+
+  if (name === 'dossiers') {
+    document.getElementById('dossiers-content').innerHTML = `<div class="dash-block">
+      <p style="color:var(--sci-muted);font-size:13px;margin-bottom:1rem">${state.dossiers.length} dossier(s) scientifique(s). Fonctionnalité complète disponible prochainement.</p>
+      ${state.dossiers.map(d => `<div class="row"><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--sci-text)">${d.patient||'—'}</div><div style="font-size:11px;color:var(--sci-muted)">${d.date||'—'} • ${d.soignant||'—'}</div></div></div>`).join('') || '<p style="color:var(--sci-muted);font-size:13px">Aucun dossier.</p>'}
+    </div>`;
+  }
+
+  if (name === 'cours') {
+    document.getElementById('cours-content').innerHTML = `<div class="dash-block">
+      <p style="color:var(--sci-muted);font-size:13px;margin-bottom:1rem">${state.cours.length} cours scientifique(s). Fonctionnalité complète disponible prochainement.</p>
+      ${state.cours.map(c => `<div class="row"><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--sci-text)">${c.titre||'—'}</div><div style="font-size:11px;color:var(--sci-muted)">${c.date||'—'}</div></div></div>`).join('') || '<p style="color:var(--sci-muted);font-size:13px">Aucun cours.</p>'}
+    </div>`;
+  }
+
+  if (name === 'ajout' && rank <= 1) {
+    document.getElementById('ajout-content').innerHTML = `<div class="dash-block" style="max-width:480px">
+      <div style="font-size:11px;font-weight:700;color:var(--sci-accent);margin-bottom:1rem;font-family:var(--sci-mono)">AJOUTER UN MEMBRE</div>
+      <div class="form-group"><label>Nom et Prénom *</label><input type="text" id="aj-nom" placeholder="Ex: Kenji Sora"/></div>
+      <div class="form-group"><label>Grade *</label><select id="aj-grade">${SCIENCE_GRADES.map(g=>`<option>${g}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Mot de passe *</label><input type="text" id="aj-pass" placeholder="Mot de passe"/></div>
+      <button onclick="addMemberSci()" class="btn-primary-sci btn-full" style="padding:11px">Ajouter le membre</button>
+      <div id="aj-ok" style="display:none;margin-top:8px;font-size:12px;color:var(--sci-green)">✓ Membre ajouté !</div>
+    </div>`;
+  }
+
+  if (name === 'logs' && rank <= 1) {
+    const members = Object.entries(state.users);
+    document.getElementById('logs-content').innerHTML = `<div class="dash-block">${
+      members.map(([k,u]) => `<div class="row">
+        <div class="dash-avatar" style="width:30px;height:30px;font-size:10px">${(u.fullname||k).slice(0,2).toUpperCase()}</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--sci-text)">${u.fullname||k}</div></div>
+        <span style="font-size:11px;color:var(--sci-muted);font-family:var(--sci-mono)">${u.grade}</span>
+      </div>`).join('') || '<p style="color:var(--sci-muted);font-size:13px">Aucun compte.</p>'
+    }</div>`;
+  }
+}
+
+function renderJournalEntries() {
+  if (state.journal.length === 0) return '<p style="color:var(--sci-muted);font-size:13px">Aucune entrée.</p>';
+  return state.journal.map(j => `<div style="padding:10px 0;border-bottom:1px solid var(--sci-border)">
+    <div style="font-size:12px;color:var(--sci-accent);font-family:var(--sci-mono);margin-bottom:4px">${j.date||'—'} — ${j.auteur||j.author||'—'}</div>
+    <div style="font-size:13px;color:var(--sci-text);line-height:1.6">${j.contenu||j.content||'—'}</div>
+  </div>`).join('');
+}
+
+async function postJournal() {
+  const text = document.getElementById('new-journal-text')?.value.trim();
+  if (!text) return;
+  const u = state.currentUser;
+  try {
+    await sbPost('journal_hop', {
+      contenu: text, auteur: u.fullname||u.username,
+      date: new Date().toLocaleDateString('fr-FR'), section: 'science'
+    });
+    document.getElementById('new-journal-text').value = '';
+    await syncAll();
+    renderTab('journal');
+  } catch(e) { console.warn(e); }
+}
+
+async function loadPublicJournal() {
+  const el = document.getElementById('public-journal-list');
+  if (!el) return;
+  try {
+    const entries = await sbGet('journal_hop','?section=eq.science&order=id.desc&limit=5');
+    if (Array.isArray(entries) && entries.length > 0) {
+      el.innerHTML = entries.map(j => `<div class="journal-item">
+        <div class="journal-date">${j.date||'—'}</div>
+        <div><div class="journal-title">${j.auteur||'Section Scientifique'}</div><div class="journal-text">${j.contenu||'—'}</div></div>
+      </div>`).join('');
+    } else {
+      el.innerHTML = '<p style="color:var(--sci-muted);font-size:13px">Aucune entrée publique pour l\'instant.</p>';
+    }
+  } catch(e) {
+    el.innerHTML = '<p style="color:var(--sci-muted);font-size:13px">Journal en cours de chargement...</p>';
+  }
+}
+
+// Actions
+async function actCandSci(id, status) {
+  if (!confirm(status==='ok'?'Accepter cette candidature ?':'Refuser cette candidature ?')) return;
+  try {
+    await sbPatch('candidatures_hop','?id=eq.'+id,{status});
+    await syncAll(); renderTab('candidatures');
+  } catch(e) {}
+}
+
+async function changeGradeSci(key, dir) {
+  const u = state.users[key]; if (!u) return;
+  const cur = GRADE_RANK[u.grade] ?? 9;
+  const newRank = cur + dir;
+  const newGrade = SCIENCE_GRADES[newRank];
+  if (!newGrade) return;
+  try {
+    await sbPatch('users','?username=eq.'+encodeURIComponent(key),{grade:newGrade});
+    state.users[key].grade = newGrade;
+    renderTab('annuaire');
+  } catch(e) {}
+}
+
+async function deleteMemberSci(key) {
+  if (!confirm('Supprimer '+state.users[key]?.fullname+' ?')) return;
+  try {
+    await sbDelete('users','?username=eq.'+encodeURIComponent(key));
+    delete state.users[key];
+    renderTab('annuaire');
+  } catch(e) {}
+}
+
+async function addMemberSci() {
+  const nom = document.getElementById('aj-nom')?.value.trim();
+  const grade = document.getElementById('aj-grade')?.value;
+  const pass = document.getElementById('aj-pass')?.value.trim();
+  if (!nom||!grade||!pass) { alert('Remplissez tous les champs.'); return; }
+  const username = nom.replace(/\s+/g,'_').toLowerCase();
+  try {
+    await sbPost('users',{username,fullname:nom,grade,password:pass,is_staff:true,matricule:'',casier:'non',inscription:new Date().toLocaleDateString('fr-FR')});
+    document.getElementById('aj-ok').style.display='block';
+    setTimeout(()=>document.getElementById('aj-ok').style.display='none',3000);
+    ['aj-nom','aj-pass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    await syncAll();
+  } catch(e) { console.warn(e); }
+}
+</script>
+</body>
+</html>
